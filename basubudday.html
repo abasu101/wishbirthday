@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Surprise</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #ffe4e1;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 600px;
+            margin: auto;
+        }
+
+        h1 {
+            color: #ff1493;
+            margin-bottom: 20px;
+        }
+
+        input {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #ff69b4;
+            font-size: 16px;
+            width: 100%;
+        }
+
+        button {
+            padding: 10px;
+            border-radius: 5px;
+            border: none;
+            background-color: #ff69b4;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            width: 100%;
+        }
+
+        button:hover {
+            background-color: #ff1493;
+        }
+
+        .post {
+            background-color: #fff;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        .post h2 {
+            margin: 0 0 10px 0;
+            color: #333;
+        }
+
+        .like-comment-share {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 10px;
+        }
+
+        .like-comment-share button {
+            background-color: transparent;
+            color: #ff69b4;
+            border: none;
+            cursor: pointer;
+        }
+
+        .like-comment-share button:hover {
+            text-decoration: underline;
+        }
+
+        #confetti {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        .audio-controls {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="confetti"></canvas>
+    
+    <div class="container" id="welcome-page">
+        <h1>🎉🎉🎉 Surprise! 🎉🎉🎉</h1>
+        <form method="POST" onsubmit="goToMessage(event)">
+            <input type="text" id="senderName" placeholder="Sender's Name" required>
+            <input type="text" id="userName" placeholder="Your Name" required>
+            <input type="date" id="dateInput" required>
+            <button type="submit">Let's Enter!</button>
+        </form>
+    </div>
+
+    <div class="container" id="message-page" style="display: none;">
+        <h1 id="greeting"></h1>
+        <div id="posts"></div>
+        <button id="nextButton" onclick="showNext()">Next</button>
+        <div class="audio-controls">
+            <button onclick="toggleAudio()">Click here</button>
+            <audio id="backgroundMusic" controls>
+                <source src="Happybirthday.mp3" type="audio/mp3">
+                Your browser does not support the audio element.
+            </audio>
+        </div>
+    </div>
+
+    <div id="final-message" style="display: none;">
+        <h2>💖 A Special Message 💖</h2>
+        <p id="hiddenMessage"></p>
+    </div>
+
+    <script>
+        const poems = [
+            // English Poems
+            "On your special day, near or far,\nMy love for you shines like a star.\nAcross the miles, I send my cheer,\nWishing you joy, my dearest dear.",
+            "Though distance keeps us far apart,\nYou're always with me in my heart.\nYour smile and voice, a sweet embrace,\nI dream of the day I'll see your face.",
+            "Happy birthday to you, my love so dear,\nMay your day be filled with joy and cheer.\nWith every wish that comes your way,\nI hope for happiness every single day.",
+            // Nepali Poems
+            "कहिले भनिनँ, तर म तिमीलाई मन पराउँछु,\nहरपल म तिम्रो हाँसोमा आफैँ हराउँछु।\nसमयले अवसर दिएन,\nतर मनको कुनामा म सधैं तिमीलाई बचाइरहेँ।",
+            "हामी टाढा छौँ तर मनहरू नजिक छन्,\nम तिमीसँग भेट्ने दिन गनेर बसेको छु।\nहर शब्दमा तिमी, हर धड्कनमा तिमी,\nयो माया कस्तो अजब, छुट्नै नसक्ने छ.",
+            "तिमी टाढा भए पनि हरेक दिन आशा गर्छु,\nतिमी र म एउटै आकाशमुनि भेट्ने।\nमौनतामा लुकेको माया,\nत्यो एक दिन शब्द बन्ने छ."
+        ];
+
+        const memories = [
+            // Corresponding Memories for English Poems
+            "Every laugh we shared brings me joy beyond measure.\nThe memories of our talks and dreams make me treasure,\nThe moments we spent, every little detail,\nLike whispers of love that will never grow pale.",
+            "From the first message to our late-night chats,\nEvery moment spent, no matter where we're at,\nYour laughter echoes in my heart's deep core,\nWith every beat, I love you more and more.",
+            "When the stars shine bright in the night sky,\nI think of you, my love, and I can't help but sigh,\nThe memories we've made will forever stay,\nIn my heart, you'll always have a place, come what may.",
+            // Corresponding Memories for Nepali Poems
+            "तिमीलाई भन्न नसकेको कुरा कहिल्यै नबिर्सनु,\nहरपल तिम्रै सम्झनामा रहन्छु म,\nटाढा हुँदा पनि माया कहिल्यै मेटिन्न,\nत्यसैले तिम्रो हाँसोले मेरो मनलाई छुनुपर्छ।",
+            "जब तिमीलाई भेट्न सक्दिनँ, म एक्लो महसुस गर्छु,\nतर हृदयमा तिम्रो याद सधैं जीवित रहन्छ,\nतिमीसँग बितेका पलहरू अमूल्य छन्,\nमेरो लागि तिम्रो हाँसोले जीवनको अर्थ दिन्छ।",
+            "हामीबीचको दूरी केवल शारीरिक हो,\nतर मेरो मन सधैं तिम्रै निकट छ,\nसपना देख्छु, तिमीलाई भेट्न पाउँदा,\nमेरो संसार तिमीले बनाउनु भएको छ।"
+        ];
+
+        let currentPoemIndex = 0;
+        const totalPosts = poems.length;
+
+        function goToMessage(event) {
+            event.preventDefault(); // Prevent form submission
+            const senderName = document.getElementById("senderName").value;
+            const userName = document.getElementById("userName").value;
+            const dateInput = document.getElementById("dateInput").value;
+
+            const today = new Date().toISOString().split('T')[0]; // Get today's date in YYYY-MM-DD format
+
+            if (dateInput === today) {
+                document.getElementById("greeting").textContent = `Happy Birthday, ${userName}! 🎂`;
+                document.getElementById("posts").innerHTML = createPostHTML(senderName, userName, currentPoemIndex);
+                document.getElementById("welcome-page").style.display = "none"; // Hide welcome page
+                document.getElementById("message-page").style.display = "block"; // Show message page
+                startConfetti(); // Start confetti animation
+            } else {
+                alert("The date you entered does not match today's date.");
+            }
+        }
+
+        function createPostHTML(sender, receiver, index) {
+            return `
+                <div class="post">
+                    <h2>${sender} to ${receiver}</h2>
+                    <p>${poems[index]}</p>
+                    <p><strong>Memory:</strong> ${memories[index]}</p>
+                    <div class="like-comment-share">
+                        <button onclick="likePost(this)">❤️ Like</button>
+                        <button onclick="commentPost(this)">💬 Comment</button>
+                        <button onclick="sharePost(this)">🔗 Share</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function showNext() {
+            currentPoemIndex++;
+            if (currentPoemIndex < totalPosts) {
+                const sender = document.getElementById("senderName").value;
+                const user = document.getElementById("userName").value;
+                document.getElementById("posts").innerHTML = createPostHTML(sender, user, currentPoemIndex);
+            } else {
+                revealFinalMessage();
+            }
+        }
+
+        function startConfetti() {
+            const canvas = document.getElementById("confetti");
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            const ctx = canvas.getContext("2d");
+            const colors = ["#ff0", "#0ff", "#ff1493", "#fff700", "#7fff00"];
+            const particles = [];
+
+            for (let i = 0; i < 300; i++) {
+                particles.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    radius: Math.random() * 5 + 5,
+                    color: colors[Math.floor(Math.random() * colors.length)],
+                    speed: Math.random() * 3 + 1,
+                    angle: Math.random() * 360
+                });
+            }
+
+            function animate() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                for (let particle of particles) {
+                    particle.x += particle.speed * Math.cos(particle.angle);
+                    particle.y += particle.speed * Math.sin(particle.angle);
+                    ctx.beginPath();
+                    ctx.arc(particle.x, particle.y, particle.radius, 0, Math.PI * 2);
+                    ctx.fillStyle = particle.color;
+                    ctx.fill();
+                    if (particle.y > canvas.height) {
+                        particle.y = 0;
+                        particle.x = Math.random() * canvas.width;
+                    }
+                }
+                requestAnimationFrame(animate);
+            }
+
+            document.getElementById("confetti").style.display = "block";
+            animate();
+        }
+
+        function revealFinalMessage() {
+            document.getElementById("message-page").style.display = "none"; // Hide message page
+            document.getElementById("final-message").style.display = "block"; // Show final message
+            document.getElementById("hiddenMessage").textContent = "I promise to love you more every day. 💖";
+        }
+
+        function toggleAudio() {
+            const music = document.getElementById("backgroundMusic");
+            if (music.paused) {
+                music.play();
+                document.getElementById("backgroundMusic").style.display = "block";
+            } else {
+                music.pause();
+            }
+        }
+
+        function likePost(button) {
+            button.textContent = "❤️ Liked";
+            button.disabled = true;
+        }
+
+        function commentPost(button) {
+            const comment = prompt("Enter your comment:");
+            if (comment) {
+                alert(`Your comment: "${comment}" has been added!`);
+            }
+        }
+
+        function sharePost(button) {
+            alert("Post shared successfully!");
+        }
+    </script>
+</body>
+</html>
